@@ -1,5 +1,18 @@
 export const navigation = [
-  { title: "Home", icon: "mdi-home-outline", route: "/" },
-  { title: "Projects", icon: "mdi-folder-outline", route: "/projects" },
-  { title: "Settings", icon: "mdi-cog-outline", route: "/settings" }
+  {
+    title: 'Home',
+    icon: 'mdi-home',
+    to: '/',
+    exact: true
+  },
+  {
+    title: 'Projects',
+    icon: 'mdi-folder',
+    to: '/projects'
+  },
+  {
+    title: 'Settings',
+    icon: 'mdi-cog',
+    to: '/settings'
+  }
 ]

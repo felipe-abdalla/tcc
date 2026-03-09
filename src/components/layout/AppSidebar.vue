@@ -13,6 +13,7 @@ const user = ref({
 
 function logout() {
     console.log("Logging out")
+
     router.push('/auth')
 }
 </script>
@@ -37,9 +38,9 @@ function logout() {
       <v-list nav>
         <v-list-item
           v-for="item in navigation"
-          :key="item.route"
-          :to="item.route"
-          link
+          :key="item.title"
+          :to="item.to"
+          :exact="item.exact"
         >
           <template #prepend>
             <v-icon>{{ item.icon }}</v-icon>
