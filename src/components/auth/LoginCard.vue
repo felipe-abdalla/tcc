@@ -9,6 +9,7 @@ const router = useRouter()
 
 function login() {
     console.log('Login with:', username.value, password.value)
+    router.push({ name: 'home' })
 }
 
 function goToRegister() {
