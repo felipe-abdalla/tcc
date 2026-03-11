@@ -1,18 +1,136 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-
+import * as XLSX from 'xlsx'
+import { ref, computed } from 'vue'
 import {
     projectBreadcrumbs,
     projectHeaders,
-    mockProjects
+    mockProjects,
 } from '@/config/projects'
+import type { ProjectItem } from '@/config/projects'
+import { apiCreateProject, apiUploadDataset } from '@/services/mockApi'
 
 const search = ref('')
 const projects = ref(mockProjects)
+const fileInput = ref<HTMLInputElement | null>(null)
+const currentFolder = ref<number | null>(null)
+const visibleItems = computed(() =>
+    projects.value.filter(item => item.parentId === currentFolder.value) 
+)
 
+function openFileDialog() {
+    fileInput.value?.click()
+}
+
+function handleFileUpload(event: Event) {
+    const target = event.target as HTMLInputElement
+    const file = target.files?.[0]
+
+    if (!file) return
+    const reader = new FileReader()
+
+    reader.onload = (e) => {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer)
+
+        const workbook = XLSX.read(data, { type: 'array' })
+
+        const sheetName = workbook.SheetNames[0]
+        const sheet = workbook.Sheets[sheetName]
+
+        const jsonData = XLSX.utils.sheet_to_json(sheet)
+
+        console.log('Dataset: ', jsonData)
+
+        uploadDatasetFile(file)
+    }
+    reader.readAsArrayBuffer(file)
+}
+/*
+function handleFileUpload(event: Event) {
+    const target = event.target as HTMLInputElement
+    const file = target.files?.[0]
+
+    if (!file) return
+    const reader = new FileReader()
+
+    reader.onload = (e) => {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer)
+
+        const workbook = XLSX.read(data, { type: 'array' })
+
+        const sheetName = workbook.SheetNames[0]
+        const sheet = workbook.Sheets[sheetName]
+
+        const jsonData = XLSX.utils.sheet_to_json(sheet)
+
+        console.log('Dataset: ', jsonData)
+
+        uploadDataset(file)
+    }
+    reader.readAsArrayBuffer(file)
+}
+*/
 function createProject() {
     console.log('Create project')
 }
+
+function addProject(project: ProjectItem) {
+    projects.value.push(project)
+}
+
+function openItem(item: ProjectItem) {
+    if (item.type === 'folder') {
+        currentFolder.value = item.id
+    }
+}
+
+function goBack() {
+    const folder = projects.value.find(p => p.id === currentFolder.value)
+    currentFolder.value = folder?.parentId ?? null
+}
+
+async function createFolder() {
+  const name = prompt('Folder name')
+  if (!name) return
+
+  const project = await apiCreateProject({
+    name,
+    type: 'folder',
+    parentId: currentFolder.value
+  })
+
+  projects.value.push(project)
+}
+
+async function uploadDatasetFile(file: File) {
+  const dataset = await apiUploadDataset(file, currentFolder.value)
+
+  projects.value.push(dataset)
+}
+/*
+async function createFolder() {
+    const name = prompt('Folder name')
+    if (!name) return
+
+    const response = await api.post('/projects', {
+        name,
+        type: 'folder',
+        parentId: currentFolder.value
+    })
+
+    projects.value.push(response.data)
+}
+
+async function uploadDataset(file: File) {
+    const formData = new FormData()
+
+    formData.append('file', file)
+    formData.append('parentId', String(currentFolder.value ?? ''))
+
+    const response = await api.post('/datasets/upload', formData)
+
+    projects.value.push(response.data)
+}
+*/
 </script>
 
 <template>
@@ -29,8 +147,8 @@ function createProject() {
           />
 
           <!-- Toolbar -->
-           <v-row>
-                <v-col class="mb-4">
+           <v-row class="mb-4" align="center">
+                <v-col cols="12" md="6">
                     <v-text-field
                         v-model="search"
                         density="compact"
@@ -39,6 +157,15 @@ function createProject() {
                         variant="outlined"
                         hide-details
                     />
+
+                    <v-btn
+                        v-if="currentFolder"
+                        variant="text"
+                        @click="goBack"
+                        class="mb-4"
+                    >
+                        ← Back
+                    </v-btn>
                 </v-col>
 
                 <v-col
@@ -46,6 +173,30 @@ function createProject() {
                     md="6"
                     class="text-md-right"
                 >
+                    <input 
+                        ref="fileInput"
+                        type="file"
+                        accept=".xlsx"
+                        style="display:none"
+                        @change="handleFileUpload"
+                    />
+
+                    <v-btn
+                        variant="outlined"
+                        class="mr-2"
+                        @click="createFolder"
+                    >
+                        New Folder
+                    </v-btn>
+
+                    <v-btn 
+                        class="mr-2"
+                        variant="outlined"
+                        @click="openFileDialog"
+                    >
+                        Import Dataset
+                    </v-btn>
+
                     <v-btn
                         color="primary"
                         @click="createProject"
@@ -57,16 +208,20 @@ function createProject() {
 
            <!-- Projects Table -->
             <v-data-table
-                :headers="headers"
-                :items="projects"
+                :headers="projectHeaders"
+                :items="visibleItems"
                 :search="search"
-                item-value="name"
                 hover
             >
                 <!-- Folder Icon -->
                  <template #item.name="{ item }">
-                    <div class="d-flex align-center">
-                        <v-icon class="mr-2">mdi-folder</v-icon>
+                    <div 
+                        class="d-flex align-center cursor-pointer"
+                        @click="openItem(item)"
+                    >
+                        <v-icon class="mr-2">
+                            {{ item.type === 'folder' ? 'mdi-folder' : 'mdi-file-excel' }}
+                        </v-icon>
                         {{ item.name }}
                     </div>
                  </template>

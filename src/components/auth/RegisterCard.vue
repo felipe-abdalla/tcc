@@ -69,10 +69,9 @@ async function register() {
         <v-form ref="form" v-model="isFormValid" validate-on="blur">
             <v-text-field
                 v-model="company"
-                label="Nome da Empresa"
+                label="Nome da Empresa (Opcional)"
                 variant="outlined"
                 density="comfortable"
-                :rules="[required]"
                 class="mb-4"
             />
 

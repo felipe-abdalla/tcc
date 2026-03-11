@@ -1,6 +1,10 @@
-export interface Project {
+export interface ProjectItem {
+    id: number
     name: string
-    modified: string
+    type: 'folder' | 'dataset'
+    parentId: number | null
+    createdAt: string
+    updatedAt: string
 }
 
 export const projectBreadcrumbs = [
@@ -12,8 +16,21 @@ export const projectHeaders = [
     { title: 'Last Modified', key: 'modified' }
 ]
 
-export const mockProjects: Project[] = [
-    { name: 'Marketing Dashboard', modified: '2026-03-09 14:30' },
-    { name: 'Client Analytics', modified: '2026-03-08 17:12' },
-    { name: 'Financial Reports', modified: '2026-03-06 09:10' }
+export const mockProjects: ProjectItem[] = [
+    {
+        "id": 1,
+        "name": "Marketing",
+        "type": "folder",
+        "parentId": null,
+        "createdAt": "2026-03-11T14:00:00",
+        "updatedAt": "2026-03-11T14:00:00"
+    },
+    {
+        "id": 5,
+        "name": "campaign_metrics",
+        "type": "dataset",
+        "parentId": 1,
+        "createdAt": "2026-03-11T14:10:00",
+        "updatedAt": "2026-03-11T14:10:00"
+    }
 ]
